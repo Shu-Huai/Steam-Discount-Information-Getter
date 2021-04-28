@@ -109,6 +109,7 @@ def GetGameCovers(contentList):
     for i in range(len(contentList)):
         for node in soup[i].find_all("div", class_="col search_capsule"):
             request.urlretrieve(node.contents[0].attrs["src"], "Game Cover" + "\\" + str(count) + ".png")
+            count += 1
 
 
 def Merge(names, urls, previousPrices, nowPrices, discounts):
