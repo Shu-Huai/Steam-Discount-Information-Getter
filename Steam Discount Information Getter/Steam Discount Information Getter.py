@@ -121,7 +121,7 @@ def Merge(names, urls, previousPrices, nowPrices, discounts):
 
 
 def FormatSortRule(sortRule):
-    inputError = bool(0)
+    inputError = False
     if sortRule == "A" or sortRule == "a" or sortRule == "0":
         sortRule = "gameName"
     elif sortRule == "B" or sortRule == "b" or sortRule == "1":
@@ -133,7 +133,7 @@ def FormatSortRule(sortRule):
     elif sortRule == "E" or sortRule == "e" or sortRule == "4":
         sortRule = "gameCoverNumber"
     else:
-        inputError = 1
+        inputError = True
     return sortRule, inputError
 
 
@@ -184,7 +184,7 @@ try:
     pages = int(pages)
 except ValueError:
     pages = 5
-inputError = bool(1)
+inputError = True
 while inputError:
     print("A/a/0 represents game name.\nB/b/1 represents previous price.\nC/c/2 represents now price.")
     print("D/d/3 represents discount.\nE/e/4 represents the original order.")
