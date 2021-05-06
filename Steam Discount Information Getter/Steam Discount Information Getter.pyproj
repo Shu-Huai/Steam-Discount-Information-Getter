@@ -61,7 +61,10 @@
     <Content Include="Game Cover\7.png" />
     <Content Include="Game Cover\8.png" />
     <Content Include="Game Cover\9.png" />
+    <Content Include="Steam Discount Information Getter Complete.png" />
+    <Content Include="Steam Discount Information Getter Error.png" />
     <Content Include="Steam Discount Information Getter.ico" />
+    <Content Include="Steam Discount Information Getter.png" />
     <Content Include="Steam Discount Information.docx" />
   </ItemGroup>
   <ItemGroup>
