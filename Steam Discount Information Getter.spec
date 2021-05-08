@@ -31,4 +31,4 @@ exe = EXE(pyz,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=True , icon='Z:\\Visual Studio\\Python\\Steam Discount Information Getter\\Steam Discount Information Getter\\Steam Discount Information Getter.ico')
+          console=False , icon='Z:\\Visual Studio\\Python\\Steam Discount Information Getter\\Steam Discount Information Getter\\Steam Discount Information Getter.ico')
