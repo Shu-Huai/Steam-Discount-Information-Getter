@@ -14,7 +14,7 @@ Types if import:
 IMPORTANT: Do NOT post this list to the issue-tracker. Use it as a basis for
            yourself tracking down the missing module. Thanks!
 
-missing module named _posixsubprocess - imported by multiprocessing.util (delayed), subprocess (optional)
+missing module named _posixsubprocess - imported by subprocess (optional), multiprocessing.util (delayed)
 missing module named _posixshmem - imported by multiprocessing.resource_tracker (conditional), multiprocessing.shared_memory (conditional)
 missing module named multiprocessing.set_start_method - imported by multiprocessing (top-level), multiprocessing.spawn (top-level)
 missing module named multiprocessing.get_start_method - imported by multiprocessing (top-level), multiprocessing.spawn (top-level)
@@ -36,8 +36,8 @@ excluded module named _frozen_importlib - imported by importlib (optional), impo
 missing module named pep517 - imported by importlib.metadata (delayed)
 missing module named posix - imported by os (conditional, optional), shutil (conditional)
 missing module named resource - imported by posix (top-level), test.support (delayed, conditional, optional)
-missing module named grp - imported by shutil (optional), tarfile (optional), pathlib (delayed, optional), subprocess (optional)
-missing module named pwd - imported by posixpath (delayed, conditional), shutil (optional), tarfile (optional), pathlib (delayed, conditional, optional), http.server (delayed, optional), webbrowser (delayed), netrc (delayed, conditional), getpass (delayed), distutils.util (delayed, conditional, optional), subprocess (optional)
+missing module named grp - imported by pathlib (delayed, optional), subprocess (optional), shutil (optional), tarfile (optional)
+missing module named pwd - imported by posixpath (delayed, conditional), pathlib (delayed, conditional, optional), subprocess (optional), http.server (delayed, optional), webbrowser (delayed), netrc (delayed, conditional), getpass (delayed), distutils.util (delayed, conditional, optional), shutil (optional), tarfile (optional)
 missing module named _scproxy - imported by urllib.request (conditional)
 missing module named urllib.urlopen - imported by urllib (delayed, optional), lxml.html (delayed, optional)
 missing module named urllib.getproxies_environment - imported by urllib (conditional), requests.compat (conditional)
@@ -52,8 +52,8 @@ missing module named urllib.quote - imported by urllib (conditional), requests.c
 missing module named iconv_codec - imported by bs4.dammit (optional)
 missing module named cchardet - imported by bs4.dammit (optional)
 missing module named 'html5lib.treebuilders' - imported by bs4.builder._html5lib (optional), lxml.html.html5parser (top-level), lxml.html._html5builder (top-level)
-missing module named urllib2 - imported by requests.compat (conditional), lxml.html.html5parser (optional), lxml.ElementInclude (optional)
 missing module named urlparse - imported by requests.compat (conditional), lxml.html (optional), lxml.html.html5parser (optional), lxml.ElementInclude (optional)
+missing module named urllib2 - imported by requests.compat (conditional), lxml.html.html5parser (optional), lxml.ElementInclude (optional)
 missing module named html5lib - imported by bs4.builder._html5lib (top-level), lxml.html.html5parser (top-level)
 missing module named htmlentitydefs - imported by lxml.html.soupparser (optional)
 missing module named BeautifulSoup - imported by lxml.html.soupparser (optional)
