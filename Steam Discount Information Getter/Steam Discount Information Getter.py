@@ -131,36 +131,33 @@ class SteamDiscountInformationGetter(object):
             games[i]["discount"] = str(games[i]["discount"]) + "%"
         return games
 
-
-def SaveToDocx(games):
-    docxFile = Document()
-    docxFile.styles["Normal"].font.name = "Times New Roman"
-    docxFile.styles["Normal"].font.size = Pt(12)
-    docxFile.add_paragraph().add_run("Here is the Steam discount information for this week.").font.bold = True
-    for i in range(len(games)):
-        paragraph = docxFile.add_paragraph()
-        paragraph.add_run("Game: %s.\n" % games[i]["gameName"]).font.bold = True
-        paragraph.add_run("Link: ")
-        part = paragraph.part
-        ralationId = part.relate_to(games[i]["gameUrl"], docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
-        hyperLink = docx.oxml.shared.OxmlElement("w:hyperlink")
-        hyperLink.set(
-            docx.oxml.shared.qn("r:id"),
-            ralationId,
-        )
-        r = docx.oxml.shared.OxmlElement('w:r')
-        rPr = docx.oxml.shared.OxmlElement('w:rPr')
-        r.append(rPr)
-        r.text = games[i]["gameUrl"]
-        hyperLink.append(r)
-        run = paragraph.add_run()
-        run._r.append(hyperLink)
-        run.font.color.theme_color = MSO_THEME_COLOR_INDEX.HYPERLINK
-        run.font.underline = True
-        paragraph.add_run("\nDiscount: %s, " % games[i]["discount"])
-        paragraph.add_run("Price: %s, Previous Price: %s." % (games[i]["nowPrice"], games[i]["previousPrice"]))
-        docxFile.add_picture("Game Cover" + "\\" + str(games[i]["gameCoverNumber"]) + ".png")
-    docxFile.save("Steam Discount Information.docx")
+    def SaveToDocx(games):
+        docxFile = Document()
+        docxFile.styles["Normal"].font.name = "Times New Roman"
+        docxFile.styles["Normal"].font.size = Pt(12)
+        docxFile.add_paragraph().add_run("Here is the Steam discount information for this week.").font.bold = True
+        for i in range(len(games)):
+            paragraph = docxFile.add_paragraph()
+            paragraph.add_run("Game: %s.\n" % games[i]["gameName"]).font.bold = True
+            paragraph.add_run("Link: ")
+            part = paragraph.part
+            ralationId = part.relate_to(games[i]["gameUrl"], docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
+            hyperLink = docx.oxml.shared.OxmlElement("w:hyperlink")
+            hyperLink.set(docx.oxml.shared.qn("r:id"),
+                ralationId,)
+            r = docx.oxml.shared.OxmlElement('w:r')
+            rPr = docx.oxml.shared.OxmlElement('w:rPr')
+            r.append(rPr)
+            r.text = games[i]["gameUrl"]
+            hyperLink.append(r)
+            run = paragraph.add_run()
+            run._r.append(hyperLink)
+            run.font.color.theme_color = MSO_THEME_COLOR_INDEX.HYPERLINK
+            run.font.underline = True
+            paragraph.add_run("\nDiscount: %s, " % games[i]["discount"])
+            paragraph.add_run("Price: %s, Previous Price: %s." % (games[i]["nowPrice"], games[i]["previousPrice"]))
+            docxFile.add_picture("Game Cover" + "\\" + str(games[i]["gameCoverNumber"]) + ".png")
+        docxFile.save("Steam Discount Information.docx")
 
 
 class MainWindow(QMainWindow):
@@ -415,7 +412,7 @@ class MainWindow(QMainWindow):
             self.resultTextBrowser.insertHtml('<img src="Game Cover\%d.png"/>' % i)
             self.resultTextBrowser.append("")
         if self.saveCheckBox.isChecked():
-            SaveToDocx(games)
+            SteamDiscountInformationGetter.SaveToDocx(games)
         completeDialog = QDialog()
         completeDialog.resize(180, 100)
         completeDialog.setWindowTitle("Complete")
