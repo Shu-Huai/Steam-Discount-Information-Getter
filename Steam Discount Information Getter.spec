@@ -4,8 +4,8 @@
 block_cipher = None
 
 
-a = Analysis(['D:\\Visual Studio\\Python\\Steam Discount Information Getter\\Steam Discount Information Getter\\Steam Discount Information Getter.py'],
-             pathex=['D:\\Visual Studio\\Python\\Steam Discount Information Getter'],
+a = Analysis(['Z:\\Visual Studio\\Python\\Steam Discount Information Getter\\Steam Discount Information Getter\\Steam Discount Information Getter.py'],
+             pathex=['Z:\\Visual Studio\\Python\\Steam Discount Information Getter'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -31,4 +31,4 @@ exe = EXE(pyz,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=True , icon='D:\\Visual Studio\\Python\\Steam Discount Information Getter\\Steam Discount Information Getter\\Steam Discount Information Getter.ico')
+          console=True , icon='Z:\\Visual Studio\\Python\\Steam Discount Information Getter\\Steam Discount Information Getter\\Steam Discount Information Getter.ico')

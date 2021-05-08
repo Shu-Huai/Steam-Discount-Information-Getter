@@ -35,9 +35,11 @@ class SteamDiscountInformationGetter(object):
         contentList = []
         for i in range(len(urls)):
             try:
-                responseList.append(requests.get(urls[i], headers=headers))
-            except ConnectionError:
-                break
+                response = requests.get(urls[i], headers=headers)
+            except requests.exceptions.ConnectionError:
+                MainWindow.EjectConnectionErrorDialog(MainWindow)
+                exit()
+            responseList.append(response)
             contentList.append(responseList[i].text)
         return contentList
 
@@ -107,7 +109,7 @@ class SteamDiscountInformationGetter(object):
         count = 0
         for i in range(len(contentList)):
             for node in soup[i].find_all("div", class_="col search_capsule"):
-                request.urlretrieve(node.contents[0].attrs["src"], r"Game Cover" + "\\" + str(count) + ".png")
+                request.urlretrieve(node.contents[0].attrs["src"], "Game Cover" + "\\" + str(count) + ".png")
                 count += 1
 
     def Merge(names, urls, previousPrices, nowPrices, discounts):
@@ -157,7 +159,7 @@ def SaveToDocx(games):
         run.font.underline = True
         paragraph.add_run("\nDiscount: %s, " % games[i]["discount"])
         paragraph.add_run("Price: %s, Previous Price: %s." % (games[i]["nowPrice"], games[i]["previousPrice"]))
-        docxFile.add_picture(r"Game Cover" + "\\" + str(games[i]["gameCoverNumber"]) + ".png")
+        docxFile.add_picture("Game Cover" + "\\" + str(games[i]["gameCoverNumber"]) + ".png")
     docxFile.save("Steam Discount Information.docx")
 
 
@@ -178,6 +180,7 @@ class MainWindow(QMainWindow):
         self.InitializeSortRuleGroup()
         self.InitializeSaveCheckBox()
         self.InitializeResultTextBrowser()
+        self.InitializeClearButton()
         self.pageNumberLabel.raise_()
         self.okButton.raise_()
         self.titleLabel.raise_()
@@ -306,7 +309,7 @@ class MainWindow(QMainWindow):
         self.gameCoverNumberRadio.clicked.connect(self.GameCoverNumberRadioChecked)
 
     def InitializeSaveCheckBox(self):
-        self.saveCheckBox = QtWidgets.QCheckBox("Save picture and input into docx", self.centralWidget)
+        self.saveCheckBox = QtWidgets.QCheckBox("Save result into docx", self.centralWidget)
         self.saveCheckBox.setGeometry(QtCore.QRect(180, 260, 221, 20))
         self.saveCheckBox.setObjectName("saveCheckBox")
         font = QtGui.QFont()
@@ -323,6 +326,17 @@ class MainWindow(QMainWindow):
         font.setFamily("Times New Roman")
         font.setPointSize(12)
         self.resultTextBrowser.setFont(font)
+        self.resultTextBrowser.setOpenExternalLinks(True)
+
+    def InitializeClearButton(self):
+        self.clearButton = QtWidgets.QPushButton("Clear", self.centralWidget)
+        self.clearButton.setGeometry(QtCore.QRect(630, 350, 75, 24))
+        self.clearButton.setObjectName("clearButton")
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(12)
+        self.clearButton.setFont(font)
+        self.clearButton.clicked.connect(self.resultTextBrowser.clear)
 
     def GetSortRule(self):
         if self.gameNameRadio.isChecked():
@@ -336,26 +350,54 @@ class MainWindow(QMainWindow):
         if self.gameCoverNumberRadio.isChecked():
             return "gameCoverNumber"
 
+    def EjectConnectionErrorDialog(self):
+        errorDialog = QDialog()
+        errorDialog.resize(260, 100)
+        errorDialog.setWindowTitle("Error")
+        errorDialog.setWindowIcon(QtGui.QIcon("Steam Discount Information Getter Error.png"))
+        errorLabel = QLabel("Error connection.\nPlease check Internet connection.", errorDialog)
+        errorLabel.move(30, 10)
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(12)
+        errorLabel.setFont(font)
+        okButton = QPushButton('Ok', errorDialog)
+        okButton.move(110, 60)
+        okButton.setFont(font)
+        okButton.clicked.connect(errorDialog.close)
+        errorDialog.exec_()
+
+    def EjectPageNumberErrorDialog(self):
+        errorDialog = QDialog()
+        errorDialog.resize(180, 100)
+        errorDialog.setWindowTitle("Error")
+        errorDialog.setWindowIcon(QtGui.QIcon("Steam Discount Information Getter Error.png"))
+        errorLabel = QLabel("Error page number.\nPlease input again.", errorDialog)
+        errorLabel.move(30, 10)
+        font = QtGui.QFont()
+        font.setFamily("Times New Roman")
+        font.setPointSize(12)
+        errorLabel.setFont(font)
+        okButton = QPushButton('Ok', errorDialog)
+        okButton.move(50, 60)
+        okButton.setFont(font)
+        okButton.clicked.connect(errorDialog.close)
+        errorDialog.exec_()
+
     def OkButtonClicked(self):
         if self.pageNumberEdit.text() == "":
             self.pageNumberEdit.setText("5")
-        pages = int(self.pageNumberEdit.text())
+        try:
+            pages = int(self.pageNumberEdit.text())
+        except ValueError:
+            self.EjectPageNumberErrorDialog()
+            self.pageNumberEdit.clear()
+            self.pageNumberEdit.setFocus()
+            return
         if pages < 0 or pages > int(self.pageNumberLabel.text().strip("Please input the pages you want:             /")):
-            errorDialog = QDialog()
-            errorDialog.resize(180, 100)
-            errorDialog.setWindowTitle("Error")
-            errorDialog.setWindowIcon(QtGui.QIcon("Steam Discount Information Getter Error.png"))
-            errorLabel = QLabel("Error page number.\nPlease input again.", errorDialog)
-            errorLabel.move(30, 10)
-            font = QtGui.QFont()
-            font.setFamily("Times New Roman")
-            font.setPointSize(12)
-            errorLabel.setFont(font)
-            okButton = QPushButton('Ok', errorDialog)
-            okButton.move(50, 60)
-            okButton.setFont(font)
-            okButton.clicked.connect(errorDialog.close)
-            errorDialog.exec_()
+            self.EjectPageNumberErrorDialog()
+            self.pageNumberEdit.clear()
+            self.pageNumberEdit.setFocus()
             return
         urls = SteamDiscountInformationGetter.CreateUrls(pages)
         contentList = SteamDiscountInformationGetter.GetUrlContents(urls)
@@ -367,8 +409,11 @@ class MainWindow(QMainWindow):
         games = SteamDiscountInformationGetter.Sort(games, sortRule=self.GetSortRule())
         self.resultTextBrowser.clear()
         for i in range(len(games)):
-            self.resultTextBrowser.append("Game: %s.\nLink: %s." % (games[i]["gameName"], games[i]["gameUrl"]))
+            self.resultTextBrowser.append("Game: %s." % (games[i]["gameName"]))
+            self.resultTextBrowser.append('Link: <a href=%s>%s</a>.' % (games[i]["gameUrl"], games[i]["gameUrl"]))
             self.resultTextBrowser.append("Discount: %s, Price: %s, Previous Price: %s.\n" % (games[i]["discount"], games[i]["nowPrice"], games[i]["previousPrice"]))
+            self.resultTextBrowser.insertHtml('<img src="Game Cover\%d.png"/>' % i)
+            self.resultTextBrowser.append("")
         if self.saveCheckBox.isChecked():
             SaveToDocx(games)
         completeDialog = QDialog()
