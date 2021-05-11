@@ -115,19 +115,29 @@ class SteamDiscountInformationGetter(object):
     def Merge(names, urls, previousPrices, nowPrices, discounts):
         games = []
         for i in range(len(names)):
-            diction = dict(gameName=names[i], gameUrl=urls[i], previousPrice=previousPrices[i], nowPrice=nowPrices[i], discount=discounts[i], gameCoverNumber=i)
-            games.append(diction)
+            dictionary = dict(gameName=names[i], gameUrl=urls[i], previousPrice=previousPrices[i], nowPrice=nowPrices[i], discount=discounts[i], gameCoverNumber=i)
+            games.append(dictionary)
         return games
 
     def Sort(games, sortRule):
         for i in range(len(games)):
+            if games[i]["previousPrice"] == "Unpurchasable":
+                games[i]["previousPrice"] = "1000000"
+            if games[i]["nowPrice"] == "Unpurchasable":
+                games[i]["nowPrice"] = "1000000"
             games[i]["previousPrice"] = float(games[i]["previousPrice"].strip("¥"))
             games[i]["nowPrice"] = float(games[i]["nowPrice"].strip("¥"))
             games[i]["discount"] = float(games[i]["discount"].strip("%"))
         games = sorted(games, key=lambda x: (x[sortRule], x["gameName"]))
         for i in range(len(games)):
-            games[i]["previousPrice"] = "¥ " + str(games[i]["previousPrice"])
-            games[i]["nowPrice"] = "¥ " + str(games[i]["nowPrice"])
+            if games[i]["previousPrice"] == 1000000:
+                games[i]["previousPrice"] = "Unpurchasable"
+            else:
+                games[i]["previousPrice"] = "¥ " + str(games[i]["previousPrice"])
+            if games[i]["nowPrice"] == 1000000:
+                games[i]["nowPrice"] = "Unpurchasable"
+            else:
+                games[i]["nowPrice"] = "¥ " + str(games[i]["nowPrice"])
             games[i]["discount"] = str(games[i]["discount"]) + "%"
         return games
 
