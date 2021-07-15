@@ -1,14 +1,39 @@
 import sys
+import os
 from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QApplication, QMainWindow
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import QRect
+from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QIcon
 import docx
 import requests
 from bs4 import BeautifulSoup
 from docx import Document
 from docx.shared import Pt
+from docx.oxml.ns import qn
 from docx.enum.dml import MSO_THEME_COLOR_INDEX
 from urllib import request
-import os
+
+from docx.image.image import Image
+from docx.shared import Inches
+
+
+@property
+def image_width(self):
+    if (self.horz_dpi == 0):
+        return Inches(self.px_width / 72)
+    return Inches(self.px_width / self.horz_dpi)
+
+
+@property
+def image_height(self):
+    if (self.vert_dpi == 0):
+        return Inches(self.px_height / 72)
+    return Inches(self.px_height / self.vert_dpi)
+
+
+Image.width = image_width
+Image.height = image_height
 
 
 class SteamDiscountInformationGetter(object):
@@ -102,14 +127,15 @@ class SteamDiscountInformationGetter(object):
                 self.DeleteGameCovers(file)
 
     def GetGameCovers(self, contentList):
-        if not os.path.exists("Game Cover"):
-            os.makedirs("Game Cover")
-        self.DeleteGameCovers(self, "Game Cover")
+        if not os.path.exists(r"Steam Discount Information Getter\Game Cover"):
+            os.makedirs(r"Steam Discount Information Getter\Game Cover")
+        self.DeleteGameCovers(self, r"Steam Discount Information Getter\Game Cover")
         soup = self.GetSoup(contentList)
         count = 0
         for i in range(len(contentList)):
             for node in soup[i].find_all("div", class_="col search_capsule"):
-                request.urlretrieve(node.contents[0].attrs["src"], "Game Cover" + "\\" + str(count) + ".png")
+                url = node.contents[0].attrs["src"].replace("capsule_sm_120.jpg", "header.jpg")
+                request.urlretrieve(url, r"Steam Discount Information Getter\Game Cover" + "\\" + str(count) + ".png")
                 count += 1
 
     def Merge(names, urls, previousPrices, nowPrices, discounts):
@@ -143,18 +169,21 @@ class SteamDiscountInformationGetter(object):
 
     def SaveToDocx(games):
         docxFile = Document()
-        docxFile.styles["Normal"].font.name = "Times New Roman"
+        docxFile.styles["Normal"].font.name = u"宋体"
+        docxFile.styles['Normal']._element.rPr.rFonts.set(qn('w:eastAsia'), u'宋体')
         docxFile.styles["Normal"].font.size = Pt(12)
-        docxFile.add_paragraph().add_run("Here is the Steam discount information for this week.").font.bold = True
+        docxFile.add_paragraph().add_run("Steam平台优惠信息").font.bold = True
         for i in range(len(games)):
             paragraph = docxFile.add_paragraph()
-            paragraph.add_run("Game: %s.\n" % games[i]["gameName"]).font.bold = True
-            paragraph.add_run("Link: ")
+            paragraph.add_run("游戏：%s。\n" % games[i]["gameName"]).font.bold = True
+            paragraph.add_run("链接：")
             part = paragraph.part
             ralationId = part.relate_to(games[i]["gameUrl"], docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
             hyperLink = docx.oxml.shared.OxmlElement("w:hyperlink")
-            hyperLink.set(docx.oxml.shared.qn("r:id"),
-                ralationId,)
+            hyperLink.set(
+                docx.oxml.shared.qn("r:id"),
+                ralationId,
+            )
             r = docx.oxml.shared.OxmlElement('w:r')
             rPr = docx.oxml.shared.OxmlElement('w:rPr')
             r.append(rPr)
@@ -164,17 +193,17 @@ class SteamDiscountInformationGetter(object):
             run._r.append(hyperLink)
             run.font.color.theme_color = MSO_THEME_COLOR_INDEX.HYPERLINK
             run.font.underline = True
-            paragraph.add_run("\nDiscount: %s, " % games[i]["discount"])
-            paragraph.add_run("Price: %s, Previous Price: %s." % (games[i]["nowPrice"], games[i]["previousPrice"]))
-            docxFile.add_picture("Game Cover" + "\\" + str(games[i]["gameCoverNumber"]) + ".png")
-        docxFile.save("Steam Discount Information.docx")
+            paragraph.add_run("\n折扣：%s，" % games[i]["discount"])
+            paragraph.add_run("价格：%s，前价%s。" % (games[i]["nowPrice"], games[i]["previousPrice"]))
+            docxFile.add_picture(r"Steam Discount Information Getter\Game Cover" + "\\" + str(games[i]["gameCoverNumber"]) + ".png")
+        docxFile.save(r"Steam Discount Information Getter\Steam Discount Information.docx")
 
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setWindowTitle("Steam Discount Information Getter")
-        self.setWindowIcon(QtGui.QIcon("Steam Discount Information Getter.png"))
+        self.setWindowIcon(QIcon(r"Steam Discount Information Getter\Steam Discount Information Getter.png"))
         self.setObjectName("mainWindow")
         self.resize(1500, 500)
         self.centralWidget = QtWidgets.QWidget(self)
@@ -195,69 +224,44 @@ class MainWindow(QMainWindow):
         self.closeButton.raise_()
         self.setCentralWidget(self.centralWidget)
         self.menubar = QtWidgets.QMenuBar(self)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 22))
-        self.menubar.setObjectName("menubar")
+        self.menubar.setGeometry(QRect(0, 0, 800, 22))
         self.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(self)
-        self.statusbar.setObjectName("statusbar")
         self.setStatusBar(self.statusbar)
 
     def InitializeTitleLabel(self):
-        self.titleLabel = QtWidgets.QLabel("Steam Discount Information Getter", self.centralWidget)
-        self.titleLabel.setGeometry(QtCore.QRect(170, 50, 391, 21))
-        self.titleLabel.setObjectName("titleLabel")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(20)
-        self.titleLabel.setFont(font)
+        self.titleLabel = QtWidgets.QLabel("Steam平台折扣信息爬取", self.centralWidget)
+        self.titleLabel.setGeometry(QRect(170, 50, 391, 40))
+        self.titleLabel.setFont(QFont("宋体", 20))
 
     def InitializePageNumberLabel(self):
         pages = SteamDiscountInformationGetter.GetMaxPage(SteamDiscountInformationGetter)
-        self.pageNumberLabel = QtWidgets.QLabel("Please input the pages you want:             /" + str(pages), self.centralWidget)
-        self.pageNumberLabel.setGeometry(QtCore.QRect(170, 110, 281, 21))
-        self.pageNumberLabel.setObjectName("pageNumberLabel")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        self.pageNumberLabel.setFont(font)
+        self.pageNumberLabel = QtWidgets.QLabel("请输入要爬取的信息页数：        /" + str(pages), self.centralWidget)
+        self.pageNumberLabel.setGeometry(QRect(170, 110, 301, 21))
+        self.pageNumberLabel.setFont(QFont("宋体", 12))
 
     def InitializePageNumberEdit(self):
         self.pageNumberEdit = QtWidgets.QLineEdit(self.centralWidget)
-        self.pageNumberEdit.setGeometry(QtCore.QRect(370, 110, 41, 21))
-        self.pageNumberEdit.setObjectName("pageNumberEdit")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        self.pageNumberEdit.setFont(font)
+        self.pageNumberEdit.setGeometry(QRect(370, 110, 41, 21))
+        self.pageNumberEdit.setFont(QFont("宋体", 12))
+        self.pageNumberEdit.returnPressed.connect(self.OkButtonClicked)
 
     def InitializeOkButton(self):
-        self.okButton = QtWidgets.QPushButton("Ok", self.centralWidget)
-        self.okButton.setGeometry(QtCore.QRect(390, 310, 75, 24))
-        self.okButton.setObjectName("okButton")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        self.okButton.setFont(font)
+        self.okButton = QtWidgets.QPushButton("确认", self.centralWidget)
+        self.okButton.setGeometry(QRect(390, 310, 75, 24))
+        self.okButton.setFont(QFont("宋体", 12))
         self.okButton.clicked.connect(self.OkButtonClicked)
 
     def InitializeCloseButton(self):
-        self.closeButton = QtWidgets.QPushButton("Close", self.centralWidget)
-        self.closeButton.setGeometry(QtCore.QRect(480, 310, 75, 24))
-        self.closeButton.setObjectName("closeButton")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        self.closeButton.setFont(font)
+        self.closeButton = QtWidgets.QPushButton("关闭", self.centralWidget)
+        self.closeButton.setGeometry(QRect(480, 310, 75, 24))
+        self.closeButton.setFont(QFont("宋体", 12))
         self.closeButton.clicked.connect(self.close)
 
     def InitializeSortRuleGroup(self):
-        self.sortRuleGroup = QtWidgets.QGroupBox("Sort rule:", self.centralWidget)
-        self.sortRuleGroup.setGeometry(QtCore.QRect(170, 160, 391, 80))
-        self.sortRuleGroup.setObjectName("sortRuleGroup")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        self.sortRuleGroup.setFont(font)
+        self.sortRuleGroup = QtWidgets.QGroupBox("排序规则：", self.centralWidget)
+        self.sortRuleGroup.setGeometry(QRect(170, 160, 391, 80))
+        self.sortRuleGroup.setFont(QFont("宋体", 12))
         self.InitializeGameNameRadio()
         self.InitializePreviousPriceRadio()
         self.InitializeNowPriceRadio()
@@ -265,84 +269,53 @@ class MainWindow(QMainWindow):
         self.InitializeGameCoverNumberRadio()
 
     def InitializeGameNameRadio(self):
-        self.gameNameRadio = QtWidgets.QRadioButton("Game name", self.sortRuleGroup)
-        self.gameNameRadio.setGeometry(QtCore.QRect(10, 20, 95, 20))
-        self.gameNameRadio.setObjectName("gameNameRadio")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        self.gameNameRadio.setFont(font)
+        self.gameNameRadio = QtWidgets.QRadioButton("游戏名称", self.sortRuleGroup)
+        self.gameNameRadio.setGeometry(QRect(10, 20, 95, 20))
+        self.gameNameRadio.setFont(QFont("宋体", 12))
         self.gameNameRadio.clicked.connect(self.GameNameRadioChecked)
 
     def InitializePreviousPriceRadio(self):
-        self.previousPriceRadio = QtWidgets.QRadioButton("Previous price", self.sortRuleGroup)
-        self.previousPriceRadio.setGeometry(QtCore.QRect(140, 20, 111, 20))
-        self.previousPriceRadio.setObjectName("previousPriceRadio")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        self.previousPriceRadio.setFont(font)
+        self.previousPriceRadio = QtWidgets.QRadioButton("先前价格", self.sortRuleGroup)
+        self.previousPriceRadio.setGeometry(QRect(140, 20, 111, 20))
+        self.previousPriceRadio.setFont(QFont("宋体", 12))
         self.previousPriceRadio.clicked.connect(self.PreviousPriceRadioChecked)
 
     def InitializeNowPriceRadio(self):
-        self.nowPriceRadio = QtWidgets.QRadioButton("Now price", self.sortRuleGroup)
-        self.nowPriceRadio.setGeometry(QtCore.QRect(270, 20, 95, 20))
-        self.nowPriceRadio.setObjectName("nowPriceRadio")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        self.nowPriceRadio.setFont(font)
+        self.nowPriceRadio = QtWidgets.QRadioButton("当前价格", self.sortRuleGroup)
+        self.nowPriceRadio.setGeometry(QRect(270, 20, 95, 20))
+        self.nowPriceRadio.setFont(QFont("宋体", 12))
         self.nowPriceRadio.clicked.connect(self.NowPriceRadioChecked)
 
     def InitializeDiscountRadio(self):
-        self.discountRadio = QtWidgets.QRadioButton("Discount", self.sortRuleGroup)
-        self.discountRadio.setGeometry(QtCore.QRect(10, 50, 95, 20))
-        self.discountRadio.setObjectName("discountRadio")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        self.discountRadio.setFont(font)
+        self.discountRadio = QtWidgets.QRadioButton("折扣力度", self.sortRuleGroup)
+        self.discountRadio.setGeometry(QRect(10, 50, 95, 20))
+        self.discountRadio.setFont(QFont("宋体", 12))
         self.discountRadio.setChecked(True)
         self.discountRadio.clicked.connect(self.DiscountRadioChecked)
 
     def InitializeGameCoverNumberRadio(self):
-        self.gameCoverNumberRadio = QtWidgets.QRadioButton("Game cover number", self.sortRuleGroup)
-        self.gameCoverNumberRadio.setGeometry(QtCore.QRect(140, 50, 171, 20))
-        self.gameCoverNumberRadio.setObjectName("gameCoverNumberRadio")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        self.gameCoverNumberRadio.setFont(font)
+        self.gameCoverNumberRadio = QtWidgets.QRadioButton("默认顺序", self.sortRuleGroup)
+        self.gameCoverNumberRadio.setGeometry(QRect(140, 50, 171, 20))
+        self.gameCoverNumberRadio.setFont(QFont("宋体", 12))
         self.gameCoverNumberRadio.clicked.connect(self.GameCoverNumberRadioChecked)
 
     def InitializeSaveCheckBox(self):
-        self.saveCheckBox = QtWidgets.QCheckBox("Save result into docx", self.centralWidget)
-        self.saveCheckBox.setGeometry(QtCore.QRect(180, 260, 221, 20))
-        self.saveCheckBox.setObjectName("saveCheckBox")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        self.saveCheckBox.setFont(font)
+        self.saveCheckBox = QtWidgets.QCheckBox("保存数据到文档", self.centralWidget)
+        self.saveCheckBox.setGeometry(QRect(180, 260, 221, 20))
+        self.saveCheckBox.setFont(QFont("宋体", 12))
         self.saveCheckBox.setChecked(True)
 
     def InitializeResultTextBrowser(self):
         self.resultTextBrowser = QtWidgets.QTextBrowser(self.centralWidget)
-        self.resultTextBrowser.setGeometry(QtCore.QRect(630, 60, 791, 271))
-        self.resultTextBrowser.setObjectName("resultTextBrowser")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        self.resultTextBrowser.setFont(font)
+        self.resultTextBrowser.setGeometry(QRect(630, 60, 791, 271))
+        self.resultTextBrowser.setFont(QFont("宋体", 12))
         self.resultTextBrowser.setOpenExternalLinks(True)
 
     def InitializeClearButton(self):
-        self.clearButton = QtWidgets.QPushButton("Clear", self.centralWidget)
-        self.clearButton.setGeometry(QtCore.QRect(630, 350, 75, 24))
+        self.clearButton = QtWidgets.QPushButton("清除", self.centralWidget)
+        self.clearButton.setGeometry(QRect(630, 350, 75, 24))
         self.clearButton.setObjectName("clearButton")
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        self.clearButton.setFont(font)
+        self.clearButton.setFont(QFont("宋体", 12))
         self.clearButton.clicked.connect(self.resultTextBrowser.clear)
 
     def GetSortRule(self):
@@ -360,34 +333,28 @@ class MainWindow(QMainWindow):
     def EjectConnectionErrorDialog(self):
         errorDialog = QDialog()
         errorDialog.resize(260, 100)
-        errorDialog.setWindowTitle("Error")
-        errorDialog.setWindowIcon(QtGui.QIcon("Steam Discount Information Getter Error.png"))
-        errorLabel = QLabel("Error connection.\nPlease check Internet connection.", errorDialog)
+        errorDialog.setWindowTitle("错误")
+        errorDialog.setWindowIcon(QIcon(r"Steam Discount Information Getter\Steam Discount Information Getter Error.png"))
+        errorLabel = QLabel("网络连接错误。\n请检查网络连接。", errorDialog)
         errorLabel.move(30, 10)
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        errorLabel.setFont(font)
-        okButton = QPushButton('Ok', errorDialog)
+        errorLabel.setFont(QFont("宋体", 12))
+        okButton = QPushButton("确认", errorDialog)
         okButton.move(110, 60)
-        okButton.setFont(font)
+        okButton.setFont(QFont("宋体", 12))
         okButton.clicked.connect(errorDialog.close)
         errorDialog.exec_()
 
     def EjectPageNumberErrorDialog(self):
         errorDialog = QDialog()
         errorDialog.resize(180, 100)
-        errorDialog.setWindowTitle("Error")
-        errorDialog.setWindowIcon(QtGui.QIcon("Steam Discount Information Getter Error.png"))
-        errorLabel = QLabel("Error page number.\nPlease input again.", errorDialog)
+        errorDialog.setWindowTitle("错误")
+        errorDialog.setWindowIcon(QIcon(r"Steam Discount Information Getter\Steam Discount Information Getter Error.png"))
+        errorLabel = QLabel("错误的页数。\n请重新输入。", errorDialog)
         errorLabel.move(30, 10)
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        errorLabel.setFont(font)
-        okButton = QPushButton('Ok', errorDialog)
+        errorLabel.setFont(QFont("宋体", 12))
+        okButton = QPushButton("确认", errorDialog)
         okButton.move(50, 60)
-        okButton.setFont(font)
+        okButton.setFont(QFont("宋体", 12))
         okButton.clicked.connect(errorDialog.close)
         errorDialog.exec_()
 
@@ -401,7 +368,7 @@ class MainWindow(QMainWindow):
             self.pageNumberEdit.clear()
             self.pageNumberEdit.setFocus()
             return
-        if pages < 0 or pages > int(self.pageNumberLabel.text().strip("Please input the pages you want:             /")):
+        if pages < 0 or pages > int(self.pageNumberLabel.text().strip("请输入要爬取的信息页数：        /")):
             self.EjectPageNumberErrorDialog()
             self.pageNumberEdit.clear()
             self.pageNumberEdit.setFocus()
@@ -416,26 +383,23 @@ class MainWindow(QMainWindow):
         games = SteamDiscountInformationGetter.Sort(games, sortRule=self.GetSortRule())
         self.resultTextBrowser.clear()
         for i in range(len(games)):
-            self.resultTextBrowser.append("Game: %s." % (games[i]["gameName"]))
-            self.resultTextBrowser.append('Link: <a href=%s>%s</a>.' % (games[i]["gameUrl"], games[i]["gameUrl"]))
-            self.resultTextBrowser.append("Discount: %s, Price: %s, Previous Price: %s.\n" % (games[i]["discount"], games[i]["nowPrice"], games[i]["previousPrice"]))
-            self.resultTextBrowser.insertHtml('<img src="Game Cover\%d.png"/>' % i)
+            self.resultTextBrowser.append("游戏%s。" % (games[i]["gameName"]))
+            self.resultTextBrowser.append('链接：<a href=%s>%s</a>。' % (games[i]["gameUrl"], games[i]["gameUrl"]))
+            self.resultTextBrowser.append("折扣：%s，价格：%s，前价%s。\n" % (games[i]["discount"], games[i]["nowPrice"], games[i]["previousPrice"]))
+            self.resultTextBrowser.insertHtml('<img src="Steam Discount Information Getter\Game Cover\%d.png"/>' % games[i]["gameCoverNumber"])
             self.resultTextBrowser.append("")
         if self.saveCheckBox.isChecked():
             SteamDiscountInformationGetter.SaveToDocx(games)
         completeDialog = QDialog()
         completeDialog.resize(180, 100)
-        completeDialog.setWindowTitle("Complete")
-        completeDialog.setWindowIcon(QtGui.QIcon("Steam Discount Information Getter Complete.png"))
-        completeLabel = QLabel("Completed getting\nsteam discount information.", completeDialog)
-        completeLabel.move(10, 10)
-        font = QtGui.QFont()
-        font.setFamily("Times New Roman")
-        font.setPointSize(12)
-        completeLabel.setFont(font)
-        okButton = QPushButton('Ok', completeDialog)
+        completeDialog.setWindowTitle("成功")
+        completeDialog.setWindowIcon(QIcon(r"Steam Discount Information Getter\Steam Discount Information Getter Complete.png"))
+        completeLabel = QLabel("操作成功。", completeDialog)
+        completeLabel.move(40, 20)
+        completeLabel.setFont(QFont("宋体", 12))
+        okButton = QPushButton("确认", completeDialog)
         okButton.move(50, 60)
-        okButton.setFont(font)
+        okButton.setFont(QFont("宋体", 12))
         okButton.clicked.connect(completeDialog.close)
         completeDialog.exec_()
 
@@ -471,6 +435,6 @@ class MainWindow(QMainWindow):
 
 
 application = QApplication(sys.argv)
-win = MainWindow()
-win.show()
+mainWindow = MainWindow()
+mainWindow.show()
 sys.exit(application.exec_())
