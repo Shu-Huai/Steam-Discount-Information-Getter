@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QApplication, QMainWindow
 from PyQt5 import QtWidgets
@@ -127,15 +127,15 @@ class SteamDiscountInformationGetter(object):
                 self.DeleteGameCovers(file)
 
     def GetGameCovers(self, contentList):
-        if not os.path.exists(r"Steam Discount Information Getter\Game Cover"):
-            os.makedirs(r"Steam Discount Information Getter\Game Cover")
-        self.DeleteGameCovers(self, r"Steam Discount Information Getter\Game Cover")
+        if not os.path.exists("Game Cover"):
+            os.makedirs("Game Cover")
+        self.DeleteGameCovers(self, "Game Cover")
         soup = self.GetSoup(contentList)
         count = 0
         for i in range(len(contentList)):
             for node in soup[i].find_all("div", class_="col search_capsule"):
                 url = node.contents[0].attrs["src"].replace("capsule_sm_120.jpg", "header.jpg")
-                request.urlretrieve(url, r"Steam Discount Information Getter\Game Cover" + "\\" + str(count) + ".png")
+                request.urlretrieve(url, "Game Cover" + "\\" + str(count) + ".png")
                 count += 1
 
     def Merge(names, urls, previousPrices, nowPrices, discounts):
@@ -195,15 +195,15 @@ class SteamDiscountInformationGetter(object):
             run.font.underline = True
             paragraph.add_run("\n折扣：%s，" % games[i]["discount"])
             paragraph.add_run("价格：%s，前价%s。" % (games[i]["nowPrice"], games[i]["previousPrice"]))
-            docxFile.add_picture(r"Steam Discount Information Getter\Game Cover" + "\\" + str(games[i]["gameCoverNumber"]) + ".png")
-        docxFile.save(r"Steam Discount Information Getter\Steam Discount Information.docx")
+            docxFile.add_picture("Game Cover" + "\\" + str(games[i]["gameCoverNumber"]) + ".png")
+        docxFile.save("Steam Discount Information.docx")
 
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setWindowTitle("Steam Discount Information Getter")
-        self.setWindowIcon(QIcon(r"Steam Discount Information Getter\Steam Discount Information Getter.png"))
+        self.setWindowIcon(QIcon("Steam Discount Information Getter.png"))
         self.setObjectName("mainWindow")
         self.resize(1500, 500)
         self.centralWidget = QtWidgets.QWidget(self)
@@ -334,7 +334,7 @@ class MainWindow(QMainWindow):
         errorDialog = QDialog()
         errorDialog.resize(260, 100)
         errorDialog.setWindowTitle("错误")
-        errorDialog.setWindowIcon(QIcon(r"Steam Discount Information Getter\Steam Discount Information Getter Error.png"))
+        errorDialog.setWindowIcon(QIcon("Steam Discount Information Getter Error.png"))
         errorLabel = QLabel("网络连接错误。\n请检查网络连接。", errorDialog)
         errorLabel.move(30, 10)
         errorLabel.setFont(QFont("宋体", 12))
@@ -348,7 +348,7 @@ class MainWindow(QMainWindow):
         errorDialog = QDialog()
         errorDialog.resize(180, 100)
         errorDialog.setWindowTitle("错误")
-        errorDialog.setWindowIcon(QIcon(r"Steam Discount Information Getter\Steam Discount Information Getter Error.png"))
+        errorDialog.setWindowIcon(QIcon("Steam Discount Information Getter Error.png"))
         errorLabel = QLabel("错误的页数。\n请重新输入。", errorDialog)
         errorLabel.move(30, 10)
         errorLabel.setFont(QFont("宋体", 12))
@@ -384,16 +384,16 @@ class MainWindow(QMainWindow):
         self.resultTextBrowser.clear()
         for i in range(len(games)):
             self.resultTextBrowser.append("游戏%s。" % (games[i]["gameName"]))
-            self.resultTextBrowser.append('链接：<a href=%s>%s</a>。' % (games[i]["gameUrl"], games[i]["gameUrl"]))
+            self.resultTextBrowser.append("链接：<a href=%s>%s</a>。" % (games[i]["gameUrl"], games[i]["gameUrl"]))
             self.resultTextBrowser.append("折扣：%s，价格：%s，前价%s。\n" % (games[i]["discount"], games[i]["nowPrice"], games[i]["previousPrice"]))
-            self.resultTextBrowser.insertHtml('<img src="Steam Discount Information Getter\Game Cover\%d.png"/>' % games[i]["gameCoverNumber"])
+            self.resultTextBrowser.insertHtml('<img src="Game Cover\%d.png"/>' % games[i]["gameCoverNumber"])
             self.resultTextBrowser.append("")
         if self.saveCheckBox.isChecked():
             SteamDiscountInformationGetter.SaveToDocx(games)
         completeDialog = QDialog()
         completeDialog.resize(180, 100)
         completeDialog.setWindowTitle("成功")
-        completeDialog.setWindowIcon(QIcon(r"Steam Discount Information Getter\Steam Discount Information Getter Complete.png"))
+        completeDialog.setWindowIcon(QIcon("Steam Discount Information Getter Complete.png"))
         completeLabel = QLabel("操作成功。", completeDialog)
         completeLabel.move(40, 20)
         completeLabel.setFont(QFont("宋体", 12))
